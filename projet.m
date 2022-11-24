@@ -14,6 +14,7 @@ dbtype('quasi_newton.m');
 dbtype('ctls_log.m');
 dbtype('grad_ctls_log.m');
 dbtype('fletcher_log.m');
+dbtype('fletcher_complet_log.m');
 dbtype('quasi_newton_log.m');
 
 ctls(0.2,0.2,xi,yi) ; 
@@ -396,47 +397,114 @@ figure;
     subplot(3,1,1) % Sigma = 10^-3
     plot(xi,yi,'+') 
     viscircles(quasi_newton_log(0.5,0.5,xi,yi,10^-3,10^-3),1.5)
+    viscircles(quasi_newton_log(3,3,xi,yi,10^-3,10^-3),1.5)
+    title('Résultat quasi_newton_log pour sigma = 10^-3')
     
     axis equal
 
     subplot(3,1,2) % Sigma = 1
     plot(xi,yi,'+') 
     viscircles(quasi_newton_log(0.5,0.5,xi,yi,10^-3,1),1.5)
+    viscircles(quasi_newton_log(3,3,xi,yi,10^-3,1),1.5)
+    title('Résultat quasi_newton_log pour sigma = 1')
     axis equal
 
     subplot(3,1,3) % Sigma = 10
     plot(xi,yi,'+') 
     viscircles(quasi_newton_log(0.5,0.5,xi,yi,10^-3,10),1.5)
+    title('Résultat quasi_newton_log pour sigma = 10')
     axis equal
 
 
-%% Question 9 Different sigma
-% for j = 1:200
-%     for k = 1:200
-%         Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-3) ;
-%         Matrix_ctls_log_sigma2(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-1) ;
-%         Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10) ;
-%     end
-% end
-% 
-% figure;
-%     subplot(3,1,1) 
-%     contour( cx2,cy2,Matrix_ctls_log_sigma1',200) 
-%     xlabel ('cx')
-%     ylabel ('cy')
-%     axis equal
-% 
-%     subplot(3,1,2) 
-%     contour( cx2,cy2,Matrix_ctls_log_sigma2',200) 
-%     xlabel ('cx')
-%     ylabel ('cy')
-%     axis equal
-% 
-%     subplot(3,1,3) 
-%     contour( cx2,cy2,Matrix_ctls_log_sigma2',200) 
-%     xlabel ('cx')
-%     ylabel ('cy')
-%     axis equal
+    min3_sigma1 = ctls_log( cx2(j),cy2(k),xi,yi,10^-3) ;
+    min3_sigma2 = ctls_log( cx2(j),cy2(k),xi,yi,0.1) ;
+    min3_sigma3 = ctls_log( cx2(j),cy2(k),xi,yi,10) ;
+
+%% Question 9 Different sigma représentation
+for j = 1:200
+    for k = 1:200
+        Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-3) ;
+        Matrix_ctls_log_sigma2(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,0.1) ;
+        Matrix_ctls_log_sigma3(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10) ;
+
+
+        % calcul du min pour sigma1
+        if (ctls_log( cx2(j),cy2(k),xi,yi,10^-3) < min3_sigma1)
+             min3_sigma1 = (ctls_log( cx2(j),cy2(k),xi,yi,10^-3));
+             min_x3_sigma1 = cx2(j);
+             min_y3_sigma1 = cy2(k);
+        end  
+
+        %calcul du min pour sigma2
+        if (ctls_log( cx2(j),cy2(k),xi,yi,0.1) < min3_sigma2)
+             min3_sigma2 = (ctls_log( cx2(j),cy2(k),xi,yi,0.1));
+             min_x3_sigma2 = cx2(j);
+             min_y3_sigma2 = cy2(k);
+        end 
+
+         %calcul du min pour sigma3
+        if (ctls_log( cx2(j),cy2(k),xi,yi,10) < min3_sigma3)
+             min3_sigma3 = (ctls_log( cx2(j),cy2(k),xi,yi,10));
+             min_x3_sigma3 = cx2(j);
+             min_y3_sigma3 = cy2(k);
+        end 
+    end
+end
+
+figure;
+    subplot(3,1,1) 
+    mesh( cx2,cy2,Matrix_ctls_log_sigma1) 
+    xlabel ('cx')
+    ylabel ('cy')
+    title('Sigma 10^-3')
+
+    subplot(3,1,2) 
+    mesh( cx2,cy2,Matrix_ctls_log_sigma2') 
+    xlabel ('cx')
+    ylabel ('cy')
+    title('Sigma 1')
+
+    subplot(3,1,3) 
+    mesh( cx2,cy2,Matrix_ctls_log_sigma3') 
+    xlabel ('cx')
+    ylabel ('cy')
+    title('Sigma 10')
+
+    % Tracé des contours
+figure;
+    subplot(3,1,1) 
+    contour( cx2,cy2,Matrix_ctls_log_sigma1',200) 
+    xlabel ('cx')
+    ylabel ('cy')
+    axis equal
+    title('Sigma 10^-3')
+
+    subplot(3,1,2) 
+    contour( cx2,cy2,Matrix_ctls_log_sigma2',200) 
+    xlabel ('cx')
+    ylabel ('cy')
+    axis equal
+    title('Sigma 1')
+
+    subplot(3,1,3) 
+    contour( cx2,cy2,Matrix_ctls_log_sigma3',200) 
+    xlabel ('cx')
+    ylabel ('cy')
+    axis equal
+    title('Sigma 10')
+
+    % On retrace les cercles en prenant 4 conditions initiales 
+
+figure;
+    plot(xi,yi,'+')
+    viscircles([min_x3_sigma1,min_y3_sigma1],1.5)
+    viscircles([min_x3_sigma2,min_y3_sigma2],1.5)
+    viscircles([min_x3_sigma3,min_y3_sigma3],1.5,'color','g')
+    xlabel ('cx')
+    ylabel ('cy')
+    axis equal
+
+
 
 
 %% Question 10 Reprise Question 5
@@ -446,6 +514,8 @@ for j = 1:200
         Grad_log = grad_ctls_log(cx2(j),cy2(k),xi,yi,1) ;
         Matrix_grad_ctls_log_x(j,k) = Grad_log(1);
         Matrix_grad_ctls_log_y(j,k) = Grad_log(2);
+
+        
     end
 end
 
@@ -458,8 +528,33 @@ figure;
     ylabel ('cy')
     axis equal
 
-%     hold on  
-%    
-%     quiver(cx2,cy2,Matrix_grad_ctls_log_x',Matrix_grad_ctls_log_y');
-%     axis equal;
-%     hold off
+    hold on  
+   
+    quiver(cx2,cy2,Matrix_grad_ctls_log_x',Matrix_grad_ctls_log_y');  
+    axis equal;
+    hold off
+
+figure;
+    contour( cx2,cy2,Matrix_ctls_log',200)
+    xlabel ('cx')
+    ylabel ('cy')
+    axis equal
+
+fletcher_complet_log(0.5,0.5,10^-3,xi,yi,10^-3,10) % En dernier argument il y a sigma
+quasi_newton_log(0.5,0.5,xi,yi,10^-3,10)
+
+
+% for i = 1:100
+%     for j = 1:100
+%         if (newCtls(cx3(i), cy3(j), xi, yi, sigma3) < min3)
+%             min3 = (newCtls(cx3(i), cy3(j), xi, yi, sigma3));
+%             min_x3 = cx3(i);
+%             min_y3 = cy3(j);
+%         end
+%     end 
+% end
+
+
+%% Question 10 Partie 6
+
+
