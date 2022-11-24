@@ -1,5 +1,5 @@
 % Projet d'optimisation 
-
+load('measured_points (1).mat')
 xi ;
 yi ;
 
@@ -10,6 +10,11 @@ dbtype('ctls.m') ;
 dbtype('grad_ctls.m') ;
 dbtype('fletcher.m');
 dbtype('quasi_newton.m');
+
+dbtype('ctls_log.m');
+dbtype('grad_ctls_log.m');
+dbtype('fletcher_log.m');
+dbtype('quasi_newton_log.m');
 
 ctls(0.2,0.2,xi,yi) ; 
 
@@ -252,7 +257,7 @@ figure ;
 
 result_q6_2 = [] ;
 norm_q6_3 = [] ;
-dist_q6_4 = []
+dist_q6_4 = [] ;
 
  for (variable = 1:size(it)) 
     result_q6_2 = [result_q6_2;ctls(it(variable,1),it(variable,2),xi,yi) ]  ;
@@ -278,16 +283,67 @@ figure;
 % calcule au debut du projet. On obtient un minimum de 17.9
 
 % Le calcul de la norme confirme la convergence du couple (cx cy) obtenu, vers un
-% minimum
+% minimum 
 
 % On remarque que en prenant un Beta2 plus grand (pour l'algorithme de Fletcher le Maréchal), 
-% On a moins d'itérations (car on a un alpha
+% On a moins d'itérations (car on a un alpha plus grand donc un pas plus
+% grand entre chaque iterations) Cela signifie que la distance entre les
+% iterations est plus grande et cela s'observe sur le Graphe (on a
+% egalement une allure zigzag attendue)
 
 
 %     hold on
 %     plot(abs(it(:,1)-it(:,2)))
 % 
 %     hold off
+
+%% Question 7
+
+[b_7, it_7, i_7] = fletcher_complet(2,3,10^-3,xi,yi,10^-4) ; % Deuxieme test avec des conditions initiales differentes
+
+result_q7_2 = [] ;
+norm_q7_3 = [] ;
+dist_q7_4 = [] ;
+
+ for (variable = 1:size(it_7)) 
+    result_q7_2 = [result_q7_2;ctls(it_7(variable,1),it_7(variable,2),xi,yi) ]  ;
+    norm_q7_3 = [norm_q7_3;norm(grad_ctls(it_7(variable,1),it_7(variable,2),xi,yi))] ; 
+ end
+
+ for(variable = 1:size(it_7)-1)
+    dist_q7_4 = [dist_q7_4;norm([it_7(variable+1,1)-it_7(variable,1);it_7(variable+1,2)-it_7(variable,2)])] ;
+ end
+
+figure ;
+    subplot(2,1,1)
+    contour(cx2,cy2,epsilon2', 100)
+    hold on
+    axis equal
+    
+    plot(it_7(:,1), it_7(:,2))
+    hold off 
+
+
+%figure;
+    subplot(2,1,2)
+    plot(result_q7_2) % calcul de la fonction de cout
+
+    hold on 
+    plot(norm_q7_3) % Calcul du gradient de la fonction de cout
+    
+    hold on
+    plot(dist_q7_4) % Calcul de la distance entre cxk,cyk et cxk+1,cyk+1
+
+    hold off
+
+
+% En changeant les conditions initiales (le point de depart) on atteint le
+% deuxieme minimum local, cela montre que l on a d autres minimums local sur
+% la fonction. Ce deuxieme minimum est du a la presence d outlayer dans les
+% mesures (points extreme) qui peuvent etre du a des causes externes (des erreurs de mesure)
+% ce qui montre les limites de la fonction de cout car les points tres
+% extremes ont un poids plus grand dans l etude de la fonction et
+% principalement dans l etude du minimum
 
 
 
@@ -317,3 +373,93 @@ figure;
 
 
 %% Question 9
+% Nouvelle fonction de coût
+ctls_log(0.5,0.5,xi,yi,10^-3)
+Grad_log = grad_ctls_log(0.5,0.5,xi,yi,10^-3) ;
+
+%Affichons les courbes associées
+
+Matrix_ctls_log = zeros(200,200) ; % Matrice contenant les valeurs de la fonction de cout avec sigma = 10^-3
+
+Matrix_ctls_log_sigma1 = zeros(200,200) ; % Matrice contenant les valeurs de la fonction de cout avec sigma = 10^-3
+Matrix_ctls_log_sigma2 = zeros(200,200) ; % sigma = 0.1
+Matrix_ctls_log_sigma3 = zeros(200,200) ; % sigma = 10
+
+
+Matrix_grad_ctls_log_x = zeros(200,200) ; % Matrice gradient selon cx
+Matrix_grad_ctls_log_y = zeros(200,200) ; % Matrice gradient selon cy
+
+quasi_newton_log(0.5,0.5,xi,yi,10^-3,10) ;
+
+% Tracé de cercle des solutions via quasi newton avec des sigma différent
+figure;
+    subplot(3,1,1) % Sigma = 10^-3
+    plot(xi,yi,'+') 
+    viscircles(quasi_newton_log(0.5,0.5,xi,yi,10^-3,10^-3),1.5)
+    
+    axis equal
+
+    subplot(3,1,2) % Sigma = 1
+    plot(xi,yi,'+') 
+    viscircles(quasi_newton_log(0.5,0.5,xi,yi,10^-3,1),1.5)
+    axis equal
+
+    subplot(3,1,3) % Sigma = 10
+    plot(xi,yi,'+') 
+    viscircles(quasi_newton_log(0.5,0.5,xi,yi,10^-3,10),1.5)
+    axis equal
+
+
+%% Question 9 Different sigma
+% for j = 1:200
+%     for k = 1:200
+%         Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-3) ;
+%         Matrix_ctls_log_sigma2(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-1) ;
+%         Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10) ;
+%     end
+% end
+% 
+% figure;
+%     subplot(3,1,1) 
+%     contour( cx2,cy2,Matrix_ctls_log_sigma1',200) 
+%     xlabel ('cx')
+%     ylabel ('cy')
+%     axis equal
+% 
+%     subplot(3,1,2) 
+%     contour( cx2,cy2,Matrix_ctls_log_sigma2',200) 
+%     xlabel ('cx')
+%     ylabel ('cy')
+%     axis equal
+% 
+%     subplot(3,1,3) 
+%     contour( cx2,cy2,Matrix_ctls_log_sigma2',200) 
+%     xlabel ('cx')
+%     ylabel ('cy')
+%     axis equal
+
+
+%% Question 10 Reprise Question 5
+for j = 1:200
+    for k = 1:200
+        Matrix_ctls_log(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10) ;
+        Grad_log = grad_ctls_log(cx2(j),cy2(k),xi,yi,1) ;
+        Matrix_grad_ctls_log_x(j,k) = Grad_log(1);
+        Matrix_grad_ctls_log_y(j,k) = Grad_log(2);
+    end
+end
+
+% Attention il faut faire les transposées des matrices pour bien les
+% afficher
+
+figure;
+    contour( cx2,cy2,Matrix_ctls_log',200)
+    xlabel ('cx')
+    ylabel ('cy')
+    axis equal
+
+%     hold on  
+%    
+%     quiver(cx2,cy2,Matrix_grad_ctls_log_x',Matrix_grad_ctls_log_y');
+%     axis equal;
+%     hold off
