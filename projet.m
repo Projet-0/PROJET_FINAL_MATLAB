@@ -423,13 +423,13 @@ figure;
 %% Question 9 Different sigma représentation
 for j = 1:200
     for k = 1:200
-        Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-3) ;
-        Matrix_ctls_log_sigma2(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,0.1) ;
-        Matrix_ctls_log_sigma3(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10) ;
+        Matrix_ctls_log_sigma1(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10^-3) ; %sigma1 = 10^-3
+        Matrix_ctls_log_sigma2(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,0.1) ; %sigma2 = 0.1
+        Matrix_ctls_log_sigma3(j,k) = ctls_log( cx2(j),cy2(k),xi,yi,10) ; %sigma3 = 10
 
 
         % calcul du min pour sigma1
-        if (ctls_log( cx2(j),cy2(k),xi,yi,10^-3) < min3_sigma1)
+        if (ctls_log( cx2(j),cy2(k),xi,yi,10^-3) < min3_sigma1) % on cherche le minimum dans la matrice
              min3_sigma1 = (ctls_log( cx2(j),cy2(k),xi,yi,10^-3));
              min_x3_sigma1 = cx2(j);
              min_y3_sigma1 = cy2(k);
@@ -504,6 +504,27 @@ figure;
     ylabel ('cy')
     axis equal
 
+%% Question 10 Reprise Question 4
+
+% Comparaison valeur théorique et valeur expérimentale
+
+%% Question 4
+
+h = 10^(-8) ; % Le pas utilisé pour le calcul de différence finie
+
+
+vtiq_cx_log = (ctls_log(-1+h,-1,xi,yi,0.1)-ctls_log(-1,-1,xi,yi,0.1) ) / h ;% Composante selon cx
+vtiq_cy_log = (ctls_log(-1,-1+h,xi,yi,0.1)-ctls_log(-1,-1,xi,yi,0.1) ) / h ;% Composante selon cy
+vexp_log = grad_ctls_log(-1,-1,xi,yi,0.1) ;
+
+e_cx_log = abs((vtiq_cx_log - vexp_log(1))/vtiq_cx_log)  % Ecart relatif selon cx
+e_cy_log = abs((vtiq_cy_log - vexp_log(2))/vtiq_cy_log)  % Ecart relatif selon cy
+
+
+% Le calcul du gradient semble cohérent avec le calcul du gradient par
+% On a un écart relatif très faible devant 1% Il en résulte que le résultat
+% calculé par la fonction gradient est cohérent, et est très proche du
+% calcul par différence fini
 
 
 
@@ -532,7 +553,11 @@ figure;
    
     quiver(cx2,cy2,Matrix_grad_ctls_log_x',Matrix_grad_ctls_log_y');  
     axis equal;
+    
+    title('Affichage des vecteurs gradients de la fonction de cout log')
     hold off
+
+
 
 figure;
     contour( cx2,cy2,Matrix_ctls_log',200)
@@ -544,17 +569,80 @@ fletcher_complet_log(0.5,0.5,10^-3,xi,yi,10^-3,10) % En dernier argument il y a 
 quasi_newton_log(0.5,0.5,xi,yi,10^-3,10)
 
 
-% for i = 1:100
-%     for j = 1:100
-%         if (newCtls(cx3(i), cy3(j), xi, yi, sigma3) < min3)
-%             min3 = (newCtls(cx3(i), cy3(j), xi, yi, sigma3));
-%             min_x3 = cx3(i);
-%             min_y3 = cy3(j);
-%         end
-%     end 
-% end
+
+%% Question 10 Partie 6 Implémenter la méthode des plus fortes pentes
 
 
-%% Question 10 Partie 6
+% ON utilise FLETCHER_Le_Marechal avec les coordonnées de départ (0.5,0.5)
+% On testera avec un sigma égal a 0.1
+
+[b_log_11, it_log_11, i_log_11] = fletcher_complet_log(-1,-1,10^-3,xi,yi,10^-4,0.1);
+[b_log_14, it_log_14, i_log_14] = fletcher_complet_log(-1,4,10^-3,xi,yi,10^-4,0.1);
+[b_log_41, it_log_41, i_log_41] = fletcher_complet_log(4,-1,10^-3,xi,yi,10^-4,0.1);
+[b_log_44, it_log_44, i_log_44] = fletcher_complet_log(4,4,10^-3,xi,yi,10^-4,0.1);
+
+% Question 6.1 On représente l'ens des points
+figure ;
+    contour(cx2,cy2,Matrix_ctls_log_sigma2', 200)
+    hold on
+    axis equal
+    
+    plot(it_log_11(:,1), it_log_11(:,2))
+    plot(it_log_14(:,1), it_log_14(:,2))
+    plot(it_log_41(:,1), it_log_41(:,2))
+    plot(it_log_44(:,1), it_log_44(:,2))
+    hold off
+
+    % Question 6.2 reprise Evolution de la fonction de cout
+
+    result_log_q6_2 = [] ;
+    norm_log_q6_3 = [] ;
+    dist_log_q6_4 = [] ;
+
+    % On va partir du points moins 1 
+ for (variable = 1:size(it_log_11)) 
+    result_log_q6_2 = [result_log_q6_2;ctls_log(it_log_11(variable,1),it_log_11(variable,2),xi,yi,0.1) ]  ;
+    norm_log_q6_3 = [norm_log_q6_3;norm(grad_ctls_log(it_log_11(variable,1),it_log_11(variable,2),xi,yi,0.1))] ; 
+ end
+
+ for(variable = 1:size(it_log_11)-1)
+    dist_log_q6_4 = [dist_log_q6_4;norm([it_log_11(variable+1,1)-it_log_11(variable,1);it_log_11(variable+1,2)-it_log_11(variable,2)])] ;
+ end
+
+figure;
+    plot(result_log_q6_2,'color','g') % calcul de la fonction de cout
+
+    hold on 
+    plot(norm_log_q6_3,'color','r') % Calcul du gradient de la fonction de cout
+    
+    hold on
+    plot(dist_log_q6_4,'color','b') % Calcul de la distance entre cxk,cyk et cxk+1,cyk+1
+
+
+    xlabel('Itérations')
+    ylabel('fonction de cout (vert), gradient (rouge), distance(bleu) ')
+    title('Evolution de la fonction de cout (vert), du gradient (rouge) , de la distance entre les itérations au cours de la recherche  ')
+    hold off
+
+    % Le resultat obtenu avec la minimisation de la fonction de cout a l'aide
+% de la methode des plus fortes pentes est cohérent avec le resultat
+% calcule au debut du projet. On obtient un minimum de 17.9
+
+% Le calcul de la norme confirme la convergence du couple (cx cy) obtenu, vers un
+% minimum 
+
+% On remarque que en prenant un Beta2 plus grand (pour l'algorithme de Fletcher le Maréchal), 
+% On a moins d'itérations (car on a un alpha plus grand donc un pas plus
+% grand entre chaque iterations) Cela signifie que la distance entre les
+% iterations est plus grande et cela s'observe sur le Graphe (on a
+% egalement une allure zigzag attendue)
+
+
+%     hold on
+%     plot(abs(it(:,1)-it(:,2)))
+% 
+%     hold off
+
+
 
 
